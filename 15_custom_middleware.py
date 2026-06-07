@@ -12,6 +12,14 @@ load_dotenv()
 #Initialize the chat model
 model = init_chat_model("gpt-5.4")
 
+"""LangChain’s create_agent runs on LangGraph’s runtime under the hood.
+LangGraph exposes a Runtime object with the following information:
+Context: static information like user id, db connections, or other dependencies for an agent invocation
+Store: a BaseStore instance used for long-term memory
+Stream writer: an object used for streaming information via the "custom" stream mode
+Execution info: identity and retry information for the current execution (thread ID, run ID, attempt number)
+Server info: server-specific metadata when running on LangGraph Server (assistant ID, graph ID, authenticated user)"""
+
 # Hook	When it runs
 # before_agent	Before agent starts (once per invocation)
 # before_model	Before each model call
