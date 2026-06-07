@@ -19,22 +19,18 @@ agent = create_agent(
         # Redact emails in user input before sending to model
         PIIMiddleware(
             "email",
-            strategy="redact",
+            strategy="hash",
             apply_to_input=True,
+            apply_to_output=False
         ),
-        # Mask credit cards in user input
-        PIIMiddleware(
-            "credit_card",
-            strategy="mask",
-            apply_to_input=True,
-        )
     ],
 )
 
 # When user provides PII, it will be handled according to the strategy
 result = agent.invoke({
-    "messages": [{"role": "user", "content": "My email is john.doe@example.com and card is 5105-1051-0510-5100"}]
+    "messages": [{"role": "user", "content": "My email is john.doe@example.com and card is 5105-1051-0510-5100. Give it in structure way"}]
 })
 
 for message in result["messages"]:
+    print("##############")
     print(message.content)

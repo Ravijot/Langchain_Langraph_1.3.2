@@ -18,3 +18,4 @@ print(response["structured_response"])
 
 for message in response["messages"]:
     print(message.content)
+
