@@ -34,4 +34,4 @@ emotion_prompt = prompt = PromptTemplate(
 
 chain3 = emotion_prompt | model | parser
 response = chain3.invoke({"text": "Hurrah! I just won the lottery!"})
-print(response)s
+print(response)
