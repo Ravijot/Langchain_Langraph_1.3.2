@@ -3,7 +3,7 @@ from langchain.chat_models import init_chat_model
 from langchain.tools import tool
 from langchain.agents import create_agent
 from langgraph.graph import START, END, StateGraph
-from langchain.messages import AIMessage
+from langchain.messages import AIMessage, ToolMessage
 from typing_extensions import TypedDict
 
 
@@ -11,6 +11,7 @@ class State(TypedDict):
     user_input: str
     output: str
     tool_calls: list
+    tool_message : str
     agent_called: str
 
 
@@ -46,11 +47,12 @@ class Graph:
             """
         )
         response = agent.invoke({"messages": [{"role": "user", "content": query}]})
-        tool_record = self.get_tool_call_record(response, "weather_agent")
+        tool_record, tool_message = self.get_tool_call_record(response, "weather_agent")
         return {
             "tool_calls": tool_record,
             "output": response["messages"][-1].content,
-            "agent_called" : "weather-agent"
+            "agent_called" : "weather-agent",
+            "tool_message" : tool_message
         }
 
     def currency_converter_agent(self, state: State):
@@ -64,15 +66,17 @@ class Graph:
             """
         )
         response = agent.invoke({"messages": [{"role": "user", "content": query}]})
-        tool_record = self.get_tool_call_record(response, "currency_converter_agent")
+        tool_record, tool_message = self.get_tool_call_record(response, "currency_converter_agent")
         return {
             "tool_calls": tool_record,
             "output": response["messages"][-1].content,
-            "agent_called" : "currency_converter"
+            "agent_called" : "currency_converter",
+            "tool_message" : tool_message
         }
 
     def get_tool_call_record(self, response, agent):
         tool_records = []
+        tool_message = ""
         for message in response["messages"]:
             if isinstance(message, AIMessage):
                 for call in message.tool_calls:
@@ -83,31 +87,24 @@ class Graph:
                             "agent" : agent
                         }
                     )
-        return tool_records
+            if isinstance(message, ToolMessage):
+                tool_message = message.content
+
+        return tool_records, tool_message
 
     def routing(self, state: State):
-
         query = state["user_input"].lower()
-
         if "dollar" in query or "rupee" in query:
             return "currency"
-
         if "weather" in query or "temperature" in query:
             return "weather"
-
         return END
 
     def build_workflow(self):
 
         graph = StateGraph(State)
-
         graph.add_node("weather", self.weather_agent)
-
-        graph.add_node(
-            "currency",
-            self.currency_converter_agent,
-        )
-
+        graph.add_node("currency",self.currency_converter_agent,)
         graph.add_conditional_edges(
             START,
             self.routing,
